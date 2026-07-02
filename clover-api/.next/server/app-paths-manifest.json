@@ -1,0 +1,8 @@
+{
+  "/api/library/route": "app/api/library/route.js",
+  "/api/series/[id]/route": "app/api/series/[id]/route.js",
+  "/api/auth/refresh/route": "app/api/auth/refresh/route.js",
+  "/api/series/[id]/sources/route": "app/api/series/[id]/sources/route.js",
+  "/api/search/route": "app/api/search/route.js",
+  "/api/library/[seriesId]/route": "app/api/library/[seriesId]/route.js"
+}

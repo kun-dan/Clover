@@ -1,0 +1,119 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           BigInt    @id @default(autoincrement())
+  email        String    @unique @db.VarChar(255)
+  passwordHash String?   @map("password_hash") @db.VarChar(255)
+  googleId     String?   @unique @map("google_id") @db.VarChar(255)
+  displayName  String?   @map("display_name") @db.VarChar(255)
+  avatarUrl    String?   @map("avatar_url")
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+
+  libraryEntries  LibraryEntry[]
+  userUpdates     UserUpdate[]
+  readingSources  ReadingSource[]
+
+  @@index([email])
+  @@index([googleId])
+  @@map("users")
+}
+
+model Series {
+  id             BigInt    @id @default(autoincrement())
+  anilistId      Int       @unique @map("anilist_id")
+  title          String    @db.VarChar(500)
+  titleRomaji    String?   @map("title_romaji") @db.VarChar(500)
+  description    String?
+  coverUrl       String?   @map("cover_url")
+  bannerUrl      String?   @map("banner_url")
+  genres         String?   // JSON array string e.g. '["Action","Romance"]'
+  seriesStatus   String?   @map("series_status") @db.VarChar(50)
+  latestChapter  Decimal?  @map("latest_chapter") @db.Decimal(6, 1)
+  asurascansSlug String?   @map("asurascans_slug") @db.VarChar(255)
+  mangaplusId    Int?      @map("mangaplus_id")
+  updatedAt      DateTime  @updatedAt @map("updated_at") @db.Timestamptz()
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+
+  libraryEntries  LibraryEntry[]
+  chapterUpdates  ChapterUpdate[]
+  readingSources  ReadingSource[]
+
+  @@index([anilistId])
+  @@index([asurascansSlug])
+  @@index([mangaplusId])
+  @@map("series")
+}
+
+model LibraryEntry {
+  id             BigInt    @id @default(autoincrement())
+  userId         BigInt    @map("user_id")
+  seriesId       BigInt    @map("series_id")
+  status         String    @default("PLAN_TO_READ") @db.VarChar(50)
+  currentChapter Decimal   @default(0) @map("current_chapter") @db.Decimal(6, 1)
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt      DateTime  @updatedAt @map("updated_at") @db.Timestamptz()
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  series Series @relation(fields: [seriesId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, seriesId])
+  @@index([userId])
+  @@index([seriesId])
+  @@index([userId, status])
+  @@map("library_entries")
+}
+
+model ChapterUpdate {
+  id             BigInt    @id @default(autoincrement())
+  seriesId       BigInt    @map("series_id")
+  chapterNumber  Decimal   @map("chapter_number") @db.Decimal(6, 1)
+  sourceProvider String    @map("source_provider") @db.VarChar(50)
+  detectedAt     DateTime  @default(now()) @map("detected_at") @db.Timestamptz()
+
+  series      Series       @relation(fields: [seriesId], references: [id], onDelete: Cascade)
+  userUpdates UserUpdate[]
+
+  @@unique([seriesId, chapterNumber, sourceProvider])
+  @@index([seriesId])
+  @@index([detectedAt(sort: Desc)])
+  @@map("chapter_updates")
+}
+
+model UserUpdate {
+  id              BigInt    @id @default(autoincrement())
+  userId          BigInt    @map("user_id")
+  chapterUpdateId BigInt    @map("chapter_update_id")
+  isRead          Boolean   @default(false) @map("is_read")
+  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+
+  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  chapterUpdate ChapterUpdate @relation(fields: [chapterUpdateId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, chapterUpdateId])
+  @@index([userId])
+  @@map("user_updates")
+}
+
+model ReadingSource {
+  id        BigInt    @id @default(autoincrement())
+  seriesId  BigInt    @map("series_id")
+  userId    BigInt?   @map("user_id")
+  provider  String?   @db.VarChar(50)
+  url       String
+  label     String    @db.VarChar(255)
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+
+  series Series  @relation(fields: [seriesId], references: [id], onDelete: Cascade)
+  user   User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([seriesId])
+  @@index([userId])
+  @@map("reading_sources")
+}

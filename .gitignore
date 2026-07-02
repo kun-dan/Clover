@@ -1,0 +1,34 @@
+# Java / Gradle
+.gradle/
+build/
+*.class
+*.jar
+*.war
+*.ear
+out/
+.idea/
+*.iml
+*.ipr
+*.iws
+.DS_Store
+
+# Node / Frontend
+node_modules/
+dist/
+.vite/
+*.local
+
+# Environment
+.env
+*.env.local
+
+# Logs
+*.log
+logs/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker volumes
+postgres_data/

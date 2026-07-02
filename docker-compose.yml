@@ -1,0 +1,57 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: clover
+      POSTGRES_USER: clover
+      POSTGRES_PASSWORD: cloverpass
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U clover -d clover"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build:
+      context: ./clover-api
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      DATASOURCES_DEFAULT_URL: jdbc:postgresql://postgres:5432/clover
+      DATASOURCES_DEFAULT_USERNAME: clover
+      DATASOURCES_DEFAULT_PASSWORD: cloverpass
+      JWT_SECRET: ${JWT_SECRET:-insecure-dev-secret-32chars!!!}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      ASURASCANS_BASE_URL: ${ASURASCANS_BASE_URL:-https://asurascans.com}
+      MANGAPLUS_API_URL: ${MANGAPLUS_API_URL:-https://jumpg-webapi.tokyo-cdn.com}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:5173}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 40s
+
+  web:
+    build:
+      context: ./clover-web
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: ""
+    ports:
+      - "3000:80"
+    depends_on:
+      api:
+        condition: service_healthy
+
+volumes:
+  postgres_data:

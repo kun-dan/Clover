@@ -29,6 +29,7 @@ logs/
 # OS
 .DS_Store
 Thumbs.db
+CLAUDE.md
 
 # Docker volumes
 postgres_data/

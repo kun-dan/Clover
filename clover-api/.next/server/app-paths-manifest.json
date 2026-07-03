@@ -1,5 +1,0 @@
-{
-  "/api/series/[id]/route": "app/api/series/[id]/route.js",
-  "/api/series/[id]/sources/route": "app/api/series/[id]/sources/route.js",
-  "/api/library/route": "app/api/library/route.js"
-}

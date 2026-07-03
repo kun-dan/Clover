@@ -3,13 +3,23 @@ import { prisma } from "@/lib/db";
 import { getAuthUser, requireAuth } from "@/lib/auth";
 import { badRequest, created, notFound, ok, serverError } from "@/lib/response";
 
-function sourceToDto(s: { id: bigint; provider: string | null; url: string; label: string; userId: bigint | null }) {
+function sourceToDto(s: {
+  id: bigint;
+  provider: string | null;
+  url: string;
+  label: string;
+  userId: bigint | null;
+  latestChapter: { toString(): string } | null;
+  lastCheckedAt: Date | null;
+}) {
   return {
     id: s.id.toString(),
     provider: s.provider,
     url: s.url,
     label: s.label,
     isUserDefined: s.userId !== null,
+    latestChapter: s.latestChapter ? s.latestChapter.toString() : null,
+    lastCheckedAt: s.lastCheckedAt,
   };
 }
 

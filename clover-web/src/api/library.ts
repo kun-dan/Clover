@@ -7,6 +7,7 @@ export interface LibraryEntryDto {
   seriesId: string;
   status: LibraryStatus;
   currentChapter: string;
+  selectedSourceId: string | null;
   updatedAt: string;
   series: {
     id: string;
@@ -24,7 +25,7 @@ export const libraryApi = {
   add: (seriesId: string, status: LibraryStatus = "PLAN_TO_READ", currentChapter = 0) =>
     client.post<LibraryEntryDto>("/api/library", { seriesId, status, currentChapter }).then((r) => r.data),
 
-  update: (seriesId: string, data: { status?: LibraryStatus; currentChapter?: number }) =>
+  update: (seriesId: string, data: { status?: LibraryStatus; currentChapter?: number; selectedSourceId?: string | null }) =>
     client.put<LibraryEntryDto>(`/api/library/${seriesId}`, data).then((r) => r.data),
 
   remove: (seriesId: string) =>

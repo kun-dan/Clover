@@ -1,8 +1,8 @@
-// File: /Users/sridhar/doc/work/clover/clover-api/app/api/auth/google/route.ts
-import * as entry from '../../../../../../app/api/auth/google/route.js'
+// File: /Users/sridhar/doc/work/clover/clover-api/app/api/series/[id]/sources/[sourceId]/route.ts
+import * as entry from '../../../../../../../../app/api/series/[id]/sources/[sourceId]/route.js'
 import type { NextRequest } from 'next/server.js'
 
-type TEntry = typeof import('../../../../../../app/api/auth/google/route.js')
+type TEntry = typeof import('../../../../../../../../app/api/series/[id]/sources/[sourceId]/route.js')
 
 // Check that the entry is a valid entry
 checkFields<Diff<{

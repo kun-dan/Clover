@@ -7,6 +7,7 @@ const VALID_STATUSES = ["READING", "COMPLETED", "DROPPED", "PLAN_TO_READ"];
 
 function entryToDto(e: {
   id: bigint; seriesId: bigint; status: string; currentChapter: { toString(): string };
+  selectedSourceId: bigint | null;
   createdAt: Date; updatedAt: Date;
   series: { id: bigint; title: string; coverUrl: string | null; latestChapter: { toString(): string } | null; seriesStatus: string | null };
 }) {
@@ -15,6 +16,7 @@ function entryToDto(e: {
     seriesId: e.seriesId.toString(),
     status: e.status,
     currentChapter: e.currentChapter.toString(),
+    selectedSourceId: e.selectedSourceId ? e.selectedSourceId.toString() : null,
     updatedAt: e.updatedAt,
     series: {
       id: e.series.id.toString(),

@@ -1,20 +1,18 @@
 import * as cheerio from "cheerio";
 import { Decimal } from "@prisma/client/runtime/library";
-import type { Series } from "@prisma/client";
 import type { MangaProvider } from "./index";
 
 export class AsuraScansProvider implements MangaProvider {
   readonly name = "asurascans";
+  readonly hostnames: string[];
   private baseUrl: string;
 
   constructor(baseUrl?: string) {
     this.baseUrl = (baseUrl ?? process.env.ASURASCANS_BASE_URL ?? "https://asurascans.com").replace(/\/$/, "");
+    this.hostnames = Array.from(new Set(["asurascans.com", "www.asurascans.com", new URL(this.baseUrl).hostname.toLowerCase()]));
   }
 
-  async fetchLatestChapter(series: Series): Promise<Decimal | null> {
-    if (!series.asurascansSlug) return null;
-
-    const url = `${this.baseUrl}/manga/${series.asurascansSlug}/`;
+  async fetchLatestChapter(url: string): Promise<Decimal | null> {
     try {
       const res = await fetch(url, {
         headers: {
@@ -36,11 +34,22 @@ export class AsuraScansProvider implements MangaProvider {
       let max: Decimal | null = null;
       const chapterRe = /(?:chapter|ch\.?)\s*([\d]+(?:\.[\d]+)?)/i;
 
-      $("a[href]").each((_, el) => {
-        const text = $(el).text().trim();
-        const match = chapterRe.exec(text);
-        if (match) {
-          const val = new Decimal(match[1]);
+      // Chapter number and "x hours ago" timestamp live in sibling spans inside the
+      // same <a>; scoping the regex to each span individually (instead of the whole
+      // anchor's concatenated text) avoids merging them into one bogus number.
+      $("a[href*='/chapter/']").each((_, el) => {
+        let found: string | null = null;
+        $(el)
+          .find("span")
+          .each((_, span) => {
+            const match = chapterRe.exec($(span).text().trim());
+            if (match) {
+              found = match[1];
+              return false;
+            }
+          });
+        if (found) {
+          const val = new Decimal(found);
           if (max === null || val.greaterThan(max)) max = val;
         }
       });

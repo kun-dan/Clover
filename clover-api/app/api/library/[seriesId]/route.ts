@@ -23,6 +23,21 @@ export async function PUT(
     if (body.currentChapter !== undefined) {
       updateData.currentChapter = body.currentChapter;
     }
+    if (body.selectedSourceId !== undefined) {
+      if (body.selectedSourceId === null) {
+        updateData.selectedSourceId = null;
+      } else {
+        const source = await prisma.readingSource.findFirst({
+          where: {
+            id: BigInt(body.selectedSourceId),
+            seriesId: BigInt(params.seriesId),
+            OR: [{ userId: null }, { userId: BigInt(user!.userId) }],
+          },
+        });
+        if (!source) return badRequest("Invalid source");
+        updateData.selectedSourceId = source.id;
+      }
+    }
 
     const entry = await prisma.libraryEntry.update({
       where: {
@@ -41,6 +56,7 @@ export async function PUT(
       seriesId: entry.seriesId.toString(),
       status: entry.status,
       currentChapter: entry.currentChapter.toString(),
+      selectedSourceId: entry.selectedSourceId ? entry.selectedSourceId.toString() : null,
       updatedAt: entry.updatedAt,
     });
   } catch {

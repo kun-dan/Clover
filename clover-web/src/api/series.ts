@@ -11,8 +11,7 @@ export interface SeriesDto {
   genres: string[];
   seriesStatus: string | null;
   latestChapter: string | null;
-  asurascansSlug: string | null;
-  mangaplusId: number | null;
+  selectedSource: ReadingSourceDto | null;
 }
 
 export interface ReadingSourceDto {
@@ -21,6 +20,8 @@ export interface ReadingSourceDto {
   url: string;
   label: string;
   isUserDefined: boolean;
+  latestChapter: string | null;
+  lastCheckedAt: string | null;
 }
 
 export interface SearchResult {

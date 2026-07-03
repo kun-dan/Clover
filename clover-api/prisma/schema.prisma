@@ -36,8 +36,6 @@ model Series {
   genres         String?   // JSON array string e.g. '["Action","Romance"]'
   seriesStatus   String?   @map("series_status") @db.VarChar(50)
   latestChapter  Decimal?  @map("latest_chapter") @db.Decimal(6, 1)
-  asurascansSlug String?   @map("asurascans_slug") @db.VarChar(255)
-  mangaplusId    Int?      @map("mangaplus_id")
   updatedAt      DateTime  @updatedAt @map("updated_at") @db.Timestamptz()
   createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz()
 
@@ -46,27 +44,28 @@ model Series {
   readingSources  ReadingSource[]
 
   @@index([anilistId])
-  @@index([asurascansSlug])
-  @@index([mangaplusId])
   @@map("series")
 }
 
 model LibraryEntry {
-  id             BigInt    @id @default(autoincrement())
-  userId         BigInt    @map("user_id")
-  seriesId       BigInt    @map("series_id")
-  status         String    @default("PLAN_TO_READ") @db.VarChar(50)
-  currentChapter Decimal   @default(0) @map("current_chapter") @db.Decimal(6, 1)
-  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz()
-  updatedAt      DateTime  @updatedAt @map("updated_at") @db.Timestamptz()
+  id               BigInt    @id @default(autoincrement())
+  userId           BigInt    @map("user_id")
+  seriesId         BigInt    @map("series_id")
+  status           String    @default("PLAN_TO_READ") @db.VarChar(50)
+  currentChapter   Decimal   @default(0) @map("current_chapter") @db.Decimal(6, 1)
+  selectedSourceId BigInt?   @map("selected_source_id")
+  createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt        DateTime  @updatedAt @map("updated_at") @db.Timestamptz()
 
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  series Series @relation(fields: [seriesId], references: [id], onDelete: Cascade)
+  user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  series         Series         @relation(fields: [seriesId], references: [id], onDelete: Cascade)
+  selectedSource ReadingSource? @relation(fields: [selectedSourceId], references: [id], onDelete: SetNull)
 
   @@unique([userId, seriesId])
   @@index([userId])
   @@index([seriesId])
   @@index([userId, status])
+  @@index([selectedSourceId])
   @@map("library_entries")
 }
 
@@ -102,16 +101,19 @@ model UserUpdate {
 }
 
 model ReadingSource {
-  id        BigInt    @id @default(autoincrement())
-  seriesId  BigInt    @map("series_id")
-  userId    BigInt?   @map("user_id")
-  provider  String?   @db.VarChar(50)
-  url       String
-  label     String    @db.VarChar(255)
-  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+  id            BigInt    @id @default(autoincrement())
+  seriesId      BigInt    @map("series_id")
+  userId        BigInt?   @map("user_id")
+  provider      String?   @db.VarChar(50)
+  url           String
+  label         String    @db.VarChar(255)
+  latestChapter Decimal?  @map("latest_chapter") @db.Decimal(6, 1)
+  lastCheckedAt DateTime? @map("last_checked_at") @db.Timestamptz()
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz()
 
-  series Series  @relation(fields: [seriesId], references: [id], onDelete: Cascade)
-  user   User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  series          Series         @relation(fields: [seriesId], references: [id], onDelete: Cascade)
+  user            User?          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  trackedByEntries LibraryEntry[]
 
   @@index([seriesId])
   @@index([userId])

@@ -1,14 +1,15 @@
 import { useState } from "react";
 import { useParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ExternalLink, Plus, Trash2, BookOpen, BookMarked } from "lucide-react";
-import { seriesApi } from "@/api/series";
+import { Plus, Trash2, BookOpen, BookMarked, Radio, CheckCircle2 } from "lucide-react";
+import { seriesApi, type ReadingSourceDto } from "@/api/series";
 import { libraryApi, type LibraryStatus } from "@/api/library";
 import { Topbar } from "@/components/layout/Topbar";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { Skeleton } from "@/components/ui/Skeleton";
+import { timeAgo } from "@/lib/utils";
 
 const STATUS_OPTIONS: { value: LibraryStatus; label: string }[] = [
   { value: "READING", label: "Reading" },
@@ -17,12 +18,24 @@ const STATUS_OPTIONS: { value: LibraryStatus; label: string }[] = [
   { value: "DROPPED", label: "Dropped" },
 ];
 
+// Best-effort: only providers with a predictable numeric chapter URL (AsuraScans)
+// support jumping straight to the next chapter; everything else just opens the
+// source's page since there's no reliable "+1" URL to build.
+function openHref(source: ReadingSourceDto, currentChapter: string | undefined): string {
+  if (source.provider === "asurascans" && currentChapter !== undefined) {
+    const next = Math.floor(parseFloat(currentChapter)) + 1;
+    return `${source.url.replace(/\/$/, "")}/chapter/${next}`;
+  }
+  return source.url;
+}
+
 export default function SeriesDetail() {
   const { id } = useParams<{ id: string }>();
   const qc = useQueryClient();
 
   const [newSourceUrl, setNewSourceUrl] = useState("");
   const [newSourceLabel, setNewSourceLabel] = useState("");
+  const [newSourceProvider, setNewSourceProvider] = useState<"custom" | "asurascans">("custom");
   const [showAddSource, setShowAddSource] = useState(false);
 
   const { data: series, isPending } = useQuery({
@@ -43,6 +56,7 @@ export default function SeriesDetail() {
   });
 
   const entry = library?.find((e) => e.seriesId === id);
+  const latestKnownChapter = series?.selectedSource?.latestChapter ?? series?.latestChapter ?? null;
 
   const addMutation = useMutation({
     mutationFn: () => libraryApi.add(id!, "PLAN_TO_READ"),
@@ -50,9 +64,12 @@ export default function SeriesDetail() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: (data: { status?: LibraryStatus; currentChapter?: number }) =>
+    mutationFn: (data: { status?: LibraryStatus; currentChapter?: number; selectedSourceId?: string | null }) =>
       libraryApi.update(id!, data),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["library"] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["library"] });
+      qc.invalidateQueries({ queryKey: ["series", id] });
+    },
   });
 
   const removeMutation = useMutation({
@@ -61,11 +78,12 @@ export default function SeriesDetail() {
   });
 
   const addSourceMutation = useMutation({
-    mutationFn: () => seriesApi.addSource(id!, newSourceUrl, newSourceLabel),
+    mutationFn: () => seriesApi.addSource(id!, newSourceUrl, newSourceLabel, newSourceProvider),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["sources", id] });
       setNewSourceUrl("");
       setNewSourceLabel("");
+      setNewSourceProvider("custom");
       setShowAddSource(false);
     },
   });
@@ -186,13 +204,22 @@ export default function SeriesDetail() {
                     <label className="text-xs text-mist/50">Chapter</label>
                     <input
                       type="number"
-                      value={parseFloat(entry.currentChapter)}
+                      value={Math.round(parseFloat(entry.currentChapter))}
                       min={0}
-                      step={0.5}
-                      onChange={(e) => updateMutation.mutate({ currentChapter: parseFloat(e.target.value) })}
+                      step={1}
+                      onChange={(e) => updateMutation.mutate({ currentChapter: Math.round(parseFloat(e.target.value) || 0) })}
                       className="w-20 text-sm bg-surface-floating border border-surface-border rounded-lg px-2 py-1 text-mist focus:outline-none focus:border-clover-500"
                     />
                   </div>
+                  {latestKnownChapter && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => updateMutation.mutate({ currentChapter: Math.floor(parseFloat(latestKnownChapter)) })}
+                    >
+                      <CheckCircle2 className="w-3.5 h-3.5" /> Caught up
+                    </Button>
+                  )}
                   <Button
                     variant="danger"
                     size="sm"
@@ -218,8 +245,19 @@ export default function SeriesDetail() {
 
           {showAddSource && (
             <div className="bg-surface-elevated border border-surface-border rounded-xl p-4 mb-3 flex flex-col gap-3">
+              <div className="flex flex-col gap-1">
+                <label className="text-xs text-mist/50">Provider</label>
+                <select
+                  value={newSourceProvider}
+                  onChange={(e) => setNewSourceProvider(e.target.value as "custom" | "asurascans")}
+                  className="text-sm bg-surface-floating border border-surface-border rounded-lg px-2 py-1.5 text-mist focus:outline-none focus:border-clover-500"
+                >
+                  <option value="custom">Custom link (no auto chapter tracking)</option>
+                  <option value="asurascans">AsuraScans</option>
+                </select>
+              </div>
               <Input
-                placeholder="https://asurascans.com/manga/..."
+                placeholder="https://asurascans.com/comics/..."
                 value={newSourceUrl}
                 onChange={(e) => setNewSourceUrl(e.target.value)}
                 label="URL"
@@ -250,38 +288,62 @@ export default function SeriesDetail() {
             {!sources || sources.length === 0 ? (
               <p className="text-sm text-mist/30 py-4">No reading sources added yet.</p>
             ) : (
-              sources.map((source) => (
-                <div
-                  key={source.id}
-                  className="flex items-center justify-between bg-surface-elevated border border-surface-border rounded-xl px-4 py-3"
-                >
-                  <div className="flex items-center gap-3 min-w-0">
-                    <ExternalLink className="w-4 h-4 text-mist/40 flex-shrink-0" />
-                    <div className="min-w-0">
-                      <p className="text-sm font-medium text-mist">{source.label}</p>
-                      <p className="text-xs text-mist/30 truncate">{source.url}</p>
+              sources.map((source) => {
+                const isTracked = entry?.selectedSourceId === source.id;
+                return (
+                  <div
+                    key={source.id}
+                    className={`flex items-center justify-between bg-surface-elevated border rounded-xl px-4 py-3 ${
+                      isTracked ? "border-clover-600" : "border-surface-border"
+                    }`}
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium text-mist">{source.label}</p>
+                        {isTracked && source.latestChapter && (
+                          <p className="text-xs text-clover-400 mt-0.5">
+                            Ch. {source.latestChapter}
+                            {source.lastCheckedAt && ` · checked ${timeAgo(source.lastCheckedAt)}`}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      {entry && (
+                        <button
+                          onClick={() =>
+                            updateMutation.mutate({ selectedSourceId: isTracked ? null : source.id })
+                          }
+                          title={isTracked ? "Stop tracking this source" : "Track this source"}
+                          className={`flex items-center gap-1 text-xs px-2 py-1 rounded-lg border transition-colors duration-150 ${
+                            isTracked
+                              ? "border-clover-600 bg-clover-900 text-clover-400"
+                              : "border-surface-border text-mist/40 hover:text-mist/70"
+                          }`}
+                        >
+                          <Radio className="w-3 h-3" /> {isTracked ? "Tracked" : "Track"}
+                        </button>
+                      )}
+                      <a
+                        href={openHref(source, entry?.currentChapter)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs text-clover-400 hover:text-clover-300 transition-colors duration-150 px-2 py-1"
+                      >
+                        Open →
+                      </a>
+                      {source.isUserDefined && (
+                        <button
+                          onClick={() => deleteSourceMutation.mutate(source.id)}
+                          className="p-1.5 text-mist/30 hover:text-red-400 transition-colors duration-150 rounded"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      )}
                     </div>
                   </div>
-                  <div className="flex items-center gap-2 flex-shrink-0">
-                    <a
-                      href={source.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-xs text-clover-400 hover:text-clover-300 transition-colors duration-150 px-2 py-1"
-                    >
-                      Open →
-                    </a>
-                    {source.isUserDefined && (
-                      <button
-                        onClick={() => deleteSourceMutation.mutate(source.id)}
-                        className="p-1.5 text-mist/30 hover:text-red-400 transition-colors duration-150 rounded"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    )}
-                  </div>
-                </div>
-              ))
+                );
+              })
             )}
           </div>
         </section>

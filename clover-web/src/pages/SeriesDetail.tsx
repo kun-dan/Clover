@@ -66,9 +66,15 @@ export default function SeriesDetail() {
   const updateMutation = useMutation({
     mutationFn: (data: { status?: LibraryStatus; currentChapter?: number; selectedSourceId?: string | null }) =>
       libraryApi.update(id!, data),
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
       qc.invalidateQueries({ queryKey: ["library"] });
       qc.invalidateQueries({ queryKey: ["series", id] });
+      // Catching up a chapter marks any now-stale updates as read server-side —
+      // refresh both surfaces that show unread updates so they drop it immediately.
+      if (variables.currentChapter !== undefined) {
+        qc.invalidateQueries({ queryKey: ["updates"] });
+        qc.invalidateQueries({ queryKey: ["updates-recent"] });
+      }
     },
   });
 

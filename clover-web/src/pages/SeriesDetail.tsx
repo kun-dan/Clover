@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Trash2, BookOpen, BookMarked, Radio, CheckCircle2 } from "lucide-react";
+import { Plus, Trash2, BookOpen, BookMarked, Radio, CheckCircle2, Star, ShieldAlert } from "lucide-react";
 import { seriesApi, type ReadingSourceDto } from "@/api/series";
 import { libraryApi, type LibraryStatus } from "@/api/library";
 import { Topbar } from "@/components/layout/Topbar";
@@ -162,6 +162,16 @@ export default function SeriesDetail() {
               {series.latestChapter && (
                 <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-surface-floating text-mist/60 border border-surface-border">
                   Latest: Ch. {series.latestChapter}
+                </span>
+              )}
+              {series.rating && (
+                <span className="flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full bg-surface-floating text-gold-300 border border-surface-border">
+                  <Star className="w-3 h-3 fill-gold-400 text-gold-400" /> {series.rating}
+                </span>
+              )}
+              {series.isAdult && (
+                <span className="flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full bg-red-950/90 text-red-300 border border-red-800/60">
+                  <ShieldAlert className="w-3 h-3" /> NSFW
                 </span>
               )}
             </div>

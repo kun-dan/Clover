@@ -1,10 +1,10 @@
 const ANILIST_URL = "https://graphql.anilist.co";
 
 const SEARCH_QUERY = `
-  query ($search: String, $page: Int, $perPage: Int) {
+  query ($search: String, $page: Int, $perPage: Int, $genre: String, $isAdult: Boolean, $sort: [MediaSort]) {
     Page(page: $page, perPage: $perPage) {
       pageInfo { hasNextPage total currentPage lastPage }
-      media(search: $search, type: MANGA, format_not_in: [NOVEL]) {
+      media(search: $search, type: MANGA, format_not_in: [NOVEL], genre: $genre, isAdult: $isAdult, sort: $sort) {
         id
         title { english romaji native }
         description(asHtml: false)
@@ -13,6 +13,8 @@ const SEARCH_QUERY = `
         genres
         status
         chapters
+        isAdult
+        averageScore
       }
     }
   }
@@ -29,6 +31,8 @@ const DETAIL_QUERY = `
       genres
       status
       chapters
+      isAdult
+      averageScore
     }
   }
 `;
@@ -42,6 +46,23 @@ export interface AniListMedia {
   genres: string[];
   status: string | null;
   chapters: number | null;
+  isAdult: boolean;
+  averageScore: number | null;
+}
+
+export type SearchSort = "relevance" | "popularity" | "rating" | "title";
+
+const SORT_MAP: Record<SearchSort, string[] | undefined> = {
+  relevance: undefined, // omit sort arg -> AniList orders by search relevance
+  popularity: ["POPULARITY_DESC"],
+  rating: ["SCORE_DESC"],
+  title: ["TITLE_ROMAJI"],
+};
+
+export interface SearchOptions {
+  genre?: string;
+  nsfw?: boolean;
+  sort?: SearchSort;
 }
 
 export interface AniListSearchResult {
@@ -70,11 +91,20 @@ async function gql<T>(query: string, variables: Record<string, unknown>): Promis
 export async function searchAniList(
   search: string,
   page = 1,
-  perPage = 20
+  perPage = 20,
+  options: SearchOptions = {}
 ): Promise<AniListSearchResult> {
   const data = await gql<{ Page: { media: AniListMedia[]; pageInfo: AniListSearchResult["pageInfo"] } }>(
     SEARCH_QUERY,
-    { search, page, perPage }
+    {
+      search,
+      page,
+      perPage,
+      genre: options.genre || undefined,
+      // omitting isAdult returns both; passing false excludes adult content (incl. Hentai) at the source
+      isAdult: options.nsfw ? undefined : false,
+      sort: SORT_MAP[options.sort ?? "relevance"],
+    }
   );
   return { media: data.Page.media, pageInfo: data.Page.pageInfo };
 }

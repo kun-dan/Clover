@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { BookOpen } from "lucide-react";
+import { BookOpen, Star } from "lucide-react";
 import type { SeriesDto } from "@/api/series";
 
 interface SeriesCardProps {
@@ -34,6 +34,11 @@ export function SeriesCard({ series, action }: SeriesCardProps) {
         {series.seriesStatus === "RELEASING" && (
           <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-clover-400 shadow-glow-green" />
         )}
+        {series.isAdult && (
+          <span className="absolute top-2 left-2 bg-red-950/90 text-red-300 text-[10px] font-semibold px-1.5 py-0.5 rounded border border-red-800/60">
+            NSFW
+          </span>
+        )}
       </Link>
       <div className="p-3 flex flex-col gap-2 flex-1">
         <Link to={`/series/${series.id}`} className="hover:text-clover-400 transition-colors duration-150">
@@ -41,6 +46,12 @@ export function SeriesCard({ series, action }: SeriesCardProps) {
             {series.title}
           </h3>
         </Link>
+        {series.rating && (
+          <div className="flex items-center gap-1 text-xs text-gold-300">
+            <Star className="w-3 h-3 fill-gold-400 text-gold-400" />
+            {series.rating}
+          </div>
+        )}
         {series.genres.length > 0 && (
           <div className="flex flex-wrap gap-1">
             {series.genres.slice(0, 3).map((g) => (

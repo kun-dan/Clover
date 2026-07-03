@@ -11,6 +11,8 @@ export interface SeriesDto {
   genres: string[];
   seriesStatus: string | null;
   latestChapter: string | null;
+  rating: string | null;
+  isAdult: boolean;
   selectedSource: ReadingSourceDto | null;
 }
 
@@ -29,9 +31,21 @@ export interface SearchResult {
   pageInfo: { hasNextPage: boolean; total: number; currentPage: number; lastPage: number };
 }
 
+export type SearchSort = "relevance" | "popularity" | "rating" | "title";
+
+export interface SearchFilters {
+  genre?: string;
+  sort?: SearchSort;
+  nsfw?: boolean;
+}
+
 export const seriesApi = {
-  search: (q: string, page = 1) =>
-    client.get<SearchResult>("/api/search", { params: { q, page } }).then((r) => r.data),
+  search: (q: string, page = 1, filters: SearchFilters = {}) =>
+    client
+      .get<SearchResult>("/api/search", {
+        params: { q, page, genre: filters.genre, sort: filters.sort, nsfw: filters.nsfw },
+      })
+      .then((r) => r.data),
 
   getById: (id: string) =>
     client.get<SeriesDto>(`/api/series/${id}`).then((r) => r.data),

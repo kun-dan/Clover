@@ -51,6 +51,23 @@ export async function PUT(
     }).catch(() => null);
 
     if (!entry) return notFound("Library entry not found");
+
+    // Being caught up on a series means there's nothing left to notify about for
+    // it — clear any unread updates for chapters at or below where the user now is,
+    // so the sidebar/Updates tab don't keep surfacing chapters already read.
+    if (body.currentChapter !== undefined) {
+      await prisma.$executeRaw`
+        UPDATE user_updates uu
+        SET is_read = true
+        FROM chapter_updates cu
+        WHERE uu.chapter_update_id = cu.id
+          AND uu.user_id = ${BigInt(user!.userId)}
+          AND cu.series_id = ${BigInt(params.seriesId)}
+          AND cu.chapter_number <= ${entry.currentChapter.toString()}::numeric
+          AND uu.is_read = false
+      `;
+    }
+
     return ok({
       id: entry.id.toString(),
       seriesId: entry.seriesId.toString(),

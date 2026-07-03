@@ -50,10 +50,10 @@ export default function Landing() {
             Sign in
           </Link>
           <Link
-            to="/register"
+            to="/dashboard"
             className="inline-flex items-center justify-center gap-2 font-medium rounded-lg bg-clover-500 text-white hover:bg-clover-400 shadow-glow-green px-3 py-1.5 text-sm transition-colors duration-150"
           >
-            Get started
+            Try it now
           </Link>
         </div>
       </nav>
@@ -86,18 +86,19 @@ export default function Landing() {
 
         <div className="flex flex-col sm:flex-row items-center gap-3">
           <Link
-            to="/register"
+            to="/dashboard"
             className="inline-flex items-center justify-center gap-2 font-medium rounded-lg bg-clover-500 text-white hover:bg-clover-400 shadow-glow-green px-6 py-3 text-base transition-colors duration-150"
           >
-            Start tracking free <ArrowRight className="w-4 h-4" />
+            Continue as guest <ArrowRight className="w-4 h-4" />
           </Link>
           <Link
-            to="/login"
+            to="/register"
             className="text-sm text-mist/50 hover:text-mist transition-colors duration-150 px-4 py-3"
           >
-            Already have an account →
+            Create a free account →
           </Link>
         </div>
+        <p className="text-xs text-mist/30 mt-1">No signup required — your guest library lives in this browser.</p>
       </section>
 
       {/* Cover shelf — the signature element */}
@@ -147,14 +148,22 @@ export default function Landing() {
           Ready to start?
         </h2>
         <p className="text-mist/50 text-sm mb-6 max-w-sm mx-auto">
-          Create your account in seconds and add your first series.
+          Jump straight in as a guest, or create an account to keep your library across devices.
         </p>
-        <Link
-          to="/register"
-          className="inline-flex items-center justify-center gap-2 font-medium rounded-lg bg-clover-500 text-white hover:bg-clover-400 shadow-glow-green px-6 py-3 text-base transition-colors duration-150"
-        >
-          Create free account
-        </Link>
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+          <Link
+            to="/dashboard"
+            className="inline-flex items-center justify-center gap-2 font-medium rounded-lg bg-clover-500 text-white hover:bg-clover-400 shadow-glow-green px-6 py-3 text-base transition-colors duration-150"
+          >
+            Continue as guest
+          </Link>
+          <Link
+            to="/register"
+            className="inline-flex items-center justify-center gap-2 font-medium rounded-lg border border-surface-border text-mist/70 hover:text-mist hover:bg-surface-elevated px-6 py-3 text-base transition-colors duration-150"
+          >
+            Create free account
+          </Link>
+        </div>
       </section>
 
       {/* Footer */}

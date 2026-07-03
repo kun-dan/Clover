@@ -16,7 +16,10 @@ export async function POST(req: NextRequest) {
     if (!valid) return unauthorized("Invalid credentials");
 
     const tokens = await issueTokenPair(user.id, user.email);
-    return ok({ ...tokens, user: { id: user.id.toString(), email: user.email, displayName: user.displayName, avatarUrl: user.avatarUrl } });
+    return ok({
+      ...tokens,
+      user: { id: user.id.toString(), email: user.email, displayName: user.displayName, avatarUrl: user.avatarUrl, isGuest: user.isGuest },
+    });
   } catch {
     return serverError();
   }

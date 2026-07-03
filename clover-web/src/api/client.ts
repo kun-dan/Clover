@@ -31,11 +31,14 @@ client.interceptors.response.use(
     const original = error.config;
     if (error.response?.status === 401 && !original._retry) {
       original._retry = true;
-      const { refreshToken, setTokens, logout } = useAuthStore.getState();
+      const { refreshToken, setTokens, logout, user } = useAuthStore.getState();
+      // Guests never had a login of their own to return to — send them back into
+      // the app so ProtectedRoute transparently provisions a fresh guest session.
+      const fallbackPath = user?.isGuest ? "/dashboard" : "/login";
 
       if (!refreshToken) {
         logout();
-        window.location.href = "/login";
+        window.location.href = fallbackPath;
         return Promise.reject(error);
       }
 
@@ -58,7 +61,7 @@ client.interceptors.response.use(
       } catch (err) {
         processQueue(err, null);
         logout();
-        window.location.href = "/login";
+        window.location.href = fallbackPath;
         return Promise.reject(err);
       } finally {
         isRefreshing = false;

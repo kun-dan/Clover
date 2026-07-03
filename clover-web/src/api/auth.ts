@@ -4,7 +4,7 @@ export interface TokenResponse {
   accessToken: string;
   refreshToken: string;
   expiresIn: number;
-  user: { id: string; email: string; displayName: string | null; avatarUrl: string | null };
+  user: { id: string; email: string; displayName: string | null; avatarUrl: string | null; isGuest: boolean };
 }
 
 export const authApi = {
@@ -13,6 +13,8 @@ export const authApi = {
 
   login: (email: string, password: string) =>
     client.post<TokenResponse>("/api/auth/login", { email, password }).then((r) => r.data),
+
+  guest: () => client.post<TokenResponse>("/api/auth/guest").then((r) => r.data),
 
   googleUrl: () => "/api/auth/google",
 };

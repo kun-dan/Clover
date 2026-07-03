@@ -20,7 +20,10 @@ export async function POST(req: NextRequest) {
     });
 
     const tokens = await issueTokenPair(user.id, user.email);
-    return created({ ...tokens, user: { id: user.id.toString(), email: user.email, displayName: user.displayName } });
+    return created({
+      ...tokens,
+      user: { id: user.id.toString(), email: user.email, displayName: user.displayName, avatarUrl: user.avatarUrl, isGuest: false },
+    });
   } catch {
     return serverError();
   }

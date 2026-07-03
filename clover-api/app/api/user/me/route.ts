@@ -3,13 +3,14 @@ import { prisma } from "@/lib/db";
 import { getAuthUser, requireAuth } from "@/lib/auth";
 import { notFound, ok, serverError } from "@/lib/response";
 
-function userToDto(u: { id: bigint; email: string; displayName: string | null; avatarUrl: string | null; googleId: string | null; createdAt: Date }) {
+function userToDto(u: { id: bigint; email: string; displayName: string | null; avatarUrl: string | null; googleId: string | null; isGuest: boolean; createdAt: Date }) {
   return {
     id: u.id.toString(),
     email: u.email,
     displayName: u.displayName,
     avatarUrl: u.avatarUrl,
     hasGoogleLinked: u.googleId !== null,
+    isGuest: u.isGuest,
     createdAt: u.createdAt,
   };
 }

@@ -7,6 +7,7 @@ export interface AuthUser {
   displayName: string | null;
   avatarUrl: string | null;
   hasGoogleLinked: boolean;
+  isGuest: boolean;
 }
 
 interface AuthState {

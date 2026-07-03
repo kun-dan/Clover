@@ -11,7 +11,10 @@ A full-stack manga and manhwa tracking app. Search titles, build your personal l
 
 ## Features
 
+- **Guest access** — No signup required. Landing on any page of the app with no session transparently provisions an anonymous guest account (own JWT, own library) so you can start using Clover immediately; create a free account later if you want your library to follow you across devices
 - **Catalog search** — Search thousands of manga/manhwa titles powered by the [AniList GraphQL API](https://anilist.gitbook.io/anilist-apiv2-docs/)
+- **Search filters** — Filter results by genre, sort by relevance/popularity/rating/title, and an NSFW toggle (off by default) that excludes adult content, including anything genre-tagged Hentai
+- **Ratings** — Each title shows its AniList community rating (0–10)
 - **Personal library** — Track series with status (Reading, Completed, Dropped, Plan to Read) and current chapter (integer only)
 - **Series detail pages** — Cover art, synopsis, genres, latest chapter, and reading source links
 - **Reading sources** — Add your own bookmark links per series, or a provider-backed link (AsuraScans today, more providers can be added via a simple registry) that supports live chapter tracking
@@ -144,10 +147,11 @@ docker compose up --build
 |---|---|---|---|
 | `POST` | `/api/auth/register` | No | Register with email + password |
 | `POST` | `/api/auth/login` | No | Login, returns JWT pair |
+| `POST` | `/api/auth/guest` | No | Create an anonymous guest user and return a JWT pair, same shape as login/register |
 | `POST` | `/api/auth/refresh` | No | Refresh access token |
 | `GET` | `/api/auth/google` | No | Start Google OAuth flow |
 | `GET` | `/api/auth/google/callback` | No | OAuth callback |
-| `GET` | `/api/search?q=&page=` | Yes | Search AniList catalog |
+| `GET` | `/api/search?q=&page=&genre=&sort=&nsfw=` | Yes | Search AniList catalog. `genre` filters to one AniList genre; `sort` is `relevance` (default) / `popularity` / `rating` / `title`; `nsfw=true` includes adult content (excluded by default) |
 | `GET` | `/api/series/:id` | Yes | Series detail. If you have a tracked reading source selected, its latest chapter is pinged live (throttled to once/minute) before responding |
 | `GET` | `/api/series/:id/sources` | Yes | Reading sources for series (includes cached `latestChapter`/`lastCheckedAt` per source) |
 | `POST` | `/api/series/:id/sources` | Yes | Add a reading link — pass `provider: "asurascans"` for live chapter tracking, or omit/`"custom"` for a plain bookmark |
@@ -196,6 +200,19 @@ curl -X POST http://localhost:8080/api/admin/trigger-update \
 
 ---
 
+## Guest Mode
+
+Clover doesn't force a signup wall. Every "app" route (`/dashboard`, `/search`, `/series/:id`, `/updates`, `/settings`) sits behind a `ProtectedRoute` component (`clover-web/src/router/index.tsx`) that used to just redirect to `/login` if there was no access token. It now does one more thing first: if there's no token, it calls `ensureGuestSession()` (`clover-web/src/lib/guestSession.ts`), which hits `POST /api/auth/guest` to create a real `User` row (`is_guest: true`, a generated placeholder email, no password) and logs it in transparently — only falling back to `/login` if that request fails.
+
+A few things fall out of guests being backed by a real `User` row instead of a client-only fake session:
+
+- Library, search, updates — every existing authenticated endpoint works for guests with no special-casing, since a guest is just a normal user as far as `requireAuth` is concerned.
+- Token refresh works the same way too. The one difference: if a guest's refresh token is ever rejected (e.g. very stale), the axios interceptor (`clover-web/src/api/client.ts`) sends them back into the app (`/dashboard`) instead of to `/login` — since a guest never had login credentials to return to, `ProtectedRoute` just provisions a fresh guest session.
+- The session lives in `localStorage` (the existing `clover-auth` zustand-persisted key) — it's tied to that browser only. There's currently no "claim this guest account" flow: registering from a guest session creates a brand-new separate account rather than upgrading the guest's data, so `Settings` shows a banner making that limitation explicit.
+- Sign-out is hidden entirely for guests (`Topbar` and `Settings`) — signing out of a guest identity has no real meaning, and would just abandon the current guest row for a new one.
+
+---
+
 ## Google OAuth Setup
 
 1. Go to [Google Cloud Console](https://console.cloud.google.com/) → APIs & Services → Credentials
@@ -208,8 +225,8 @@ curl -X POST http://localhost:8080/api/admin/trigger-update \
 ## Database Schema
 
 ```
-users               — id, email, password_hash, google_id, display_name, avatar_url
-series              — id, anilist_id, title, cover_url, genres, latest_chapter
+users               — id, email, password_hash, google_id, display_name, avatar_url, is_guest
+series              — id, anilist_id, title, cover_url, genres, latest_chapter, rating, is_adult
 library_entries     — user_id → series_id, status, current_chapter, selected_source_id → reading_sources (UNIQUE per user+series)
 chapter_updates     — series_id, chapter_number, source_provider (UNIQUE per series+chapter+provider)
 user_updates        — user_id → chapter_update_id, is_read (fan-out from chapter_updates)

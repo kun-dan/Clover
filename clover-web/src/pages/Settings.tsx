@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { useMutation } from "@tanstack/react-query";
-import { User, Mail, Leaf } from "lucide-react";
+import { User, Mail, Leaf, ShieldAlert } from "lucide-react";
 import { userApi } from "@/api/user";
 import { useAuthStore } from "@/store/authStore";
 import { Topbar } from "@/components/layout/Topbar";
@@ -20,8 +21,17 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 
 export default function Settings() {
   const { user, setUser, logout } = useAuthStore();
+  const navigate = useNavigate();
   const [displayName, setDisplayName] = useState(user?.displayName ?? "");
   const [saved, setSaved] = useState(false);
+
+  // Navigate away before ProtectedRoute re-renders on the cleared token —
+  // otherwise it treats "no token" as "needs a guest session" and silently
+  // provisions a brand new guest in place of the account we just left.
+  function handleLogout() {
+    logout();
+    navigate("/", { replace: true });
+  }
 
   useEffect(() => {
     setDisplayName(user?.displayName ?? "");
@@ -41,6 +51,20 @@ export default function Settings() {
       <Topbar title="Settings" />
       <div className="flex-1 p-6 max-w-lg flex flex-col gap-6">
 
+        {user?.isGuest && (
+          <div className="flex items-start gap-3 bg-gold-500/10 border border-gold-500/30 rounded-xl p-4">
+            <ShieldAlert className="w-4 h-4 text-gold-300 flex-shrink-0 mt-0.5" />
+            <div className="flex flex-col gap-2">
+              <p className="text-sm text-gold-200">
+                You're browsing as a guest. Your library only lives in this browser — clearing site data will lose it.
+              </p>
+              <Link to="/register" className="text-xs font-medium text-gold-300 hover:text-gold-200 transition-colors duration-150 w-fit">
+                Create a free account →
+              </Link>
+            </div>
+          </div>
+        )}
+
         <Section title="Account">
           <div className="flex items-center gap-3">
             {user?.avatarUrl ? (
@@ -52,7 +76,7 @@ export default function Settings() {
             )}
             <div>
               <p className="text-sm font-medium text-mist">{user?.displayName ?? "—"}</p>
-              <p className="text-xs text-mist/40">{user?.email}</p>
+              <p className="text-xs text-mist/40">{user?.isGuest ? "Guest account" : user?.email}</p>
             </div>
           </div>
 
@@ -76,7 +100,7 @@ export default function Settings() {
         <Section title="Email">
           <div className="flex items-center gap-3 text-sm text-mist/60">
             <Mail className="w-4 h-4" />
-            <span>{user?.email}</span>
+            <span>{user?.isGuest ? "No email — guest account" : user?.email}</span>
           </div>
           <p className="text-xs text-mist/30">Email address cannot be changed in this version.</p>
         </Section>
@@ -108,12 +132,14 @@ export default function Settings() {
           </div>
         </Section>
 
-        <Section title="Danger zone">
-          <p className="text-xs text-mist/40">Signing out will clear your session from this device.</p>
-          <Button variant="danger" onClick={logout} className="w-fit">
-            <Leaf className="w-3.5 h-3.5" /> Sign out
-          </Button>
-        </Section>
+        {!user?.isGuest && (
+          <Section title="Danger zone">
+            <p className="text-xs text-mist/40">Signing out will clear your session from this device.</p>
+            <Button variant="danger" onClick={handleLogout} className="w-fit">
+              <Leaf className="w-3.5 h-3.5" /> Sign out
+            </Button>
+          </Section>
+        )}
       </div>
     </>
   );

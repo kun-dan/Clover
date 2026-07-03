@@ -16,6 +16,7 @@ out/
 node_modules/
 dist/
 .vite/
+.next/
 *.local
 
 # Environment

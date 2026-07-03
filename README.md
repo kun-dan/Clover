@@ -9,6 +9,18 @@ A full-stack manga and manhwa tracking app. Search titles, build your personal l
 
 ---
 
+## Screenshots
+
+| Landing | Dashboard |
+|---|---|
+| ![Landing page](docs/screenshots/landing.png) | ![Dashboard](docs/screenshots/dashboard.png) |
+
+| Search | Series detail |
+|---|---|
+| ![Search catalog](docs/screenshots/search.png) | ![Series detail](docs/screenshots/series-detail.png) |
+
+---
+
 ## Features
 
 - **Guest access** — No signup required. Landing on any page of the app with no session transparently provisions an anonymous guest account (own JWT, own library) so you can start using Clover immediately; create a free account later if you want your library to follow you across devices

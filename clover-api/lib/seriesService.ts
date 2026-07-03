@@ -1,6 +1,7 @@
 import { prisma } from "./db";
 import { type AniListMedia, mediaTitle } from "./anilist";
 import type { Series } from "@prisma/client";
+import { Decimal } from "@prisma/client/runtime/library";
 
 export function seriesFromAniList(media: AniListMedia): Omit<Series, "id" | "createdAt" | "updatedAt" | "latestChapter"> {
   return {
@@ -12,6 +13,8 @@ export function seriesFromAniList(media: AniListMedia): Omit<Series, "id" | "cre
     bannerUrl: media.bannerImage,
     genres: JSON.stringify(media.genres ?? []),
     seriesStatus: media.status,
+    rating: media.averageScore != null ? new Decimal(media.averageScore / 10) : null,
+    isAdult: media.isAdult ?? false,
   };
 }
 
@@ -27,6 +30,8 @@ export async function upsertSeries(media: AniListMedia): Promise<Series> {
       bannerUrl: data.bannerUrl,
       genres: data.genres,
       seriesStatus: data.seriesStatus,
+      rating: data.rating,
+      isAdult: data.isAdult,
     },
     create: data,
   });
@@ -44,5 +49,7 @@ export function seriesToDto(s: Series) {
     genres: s.genres ? JSON.parse(s.genres) : [],
     seriesStatus: s.seriesStatus,
     latestChapter: s.latestChapter ? s.latestChapter.toString() : null,
+    rating: s.rating ? s.rating.toString() : null,
+    isAdult: s.isAdult,
   };
 }

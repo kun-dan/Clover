@@ -36,6 +36,8 @@ model Series {
   genres         String?   // JSON array string e.g. '["Action","Romance"]'
   seriesStatus   String?   @map("series_status") @db.VarChar(50)
   latestChapter  Decimal?  @map("latest_chapter") @db.Decimal(6, 1)
+  rating         Decimal?  @db.Decimal(3, 1)
+  isAdult        Boolean   @default(false) @map("is_adult")
   updatedAt      DateTime  @updatedAt @map("updated_at") @db.Timestamptz()
   createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz()
 

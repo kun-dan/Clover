@@ -2,8 +2,7 @@ import { NextRequest } from "next/server";
 import { prisma } from "@/lib/db";
 import { getAuthUser, requireAuth } from "@/lib/auth";
 import { badRequest, conflict, created, notFound, ok, serverError } from "@/lib/response";
-
-const VALID_STATUSES = ["READING", "COMPLETED", "DROPPED", "PLAN_TO_READ"];
+import { isValidStatus } from "@/lib/libraryStatus";
 
 function entryToDto(e: {
   id: bigint; seriesId: bigint; status: string; currentChapter: { toString(): string };
@@ -38,7 +37,7 @@ export async function GET(req: NextRequest) {
 
   try {
     const where: Record<string, unknown> = { userId: BigInt(user!.userId) };
-    if (status && VALID_STATUSES.includes(status)) where.status = status;
+    if (status && isValidStatus(status)) where.status = status;
 
     const entries = await prisma.libraryEntry.findMany({
       where,
@@ -59,7 +58,7 @@ export async function POST(req: NextRequest) {
   try {
     const { seriesId, status = "PLAN_TO_READ", currentChapter = 0 } = await req.json();
     if (!seriesId) return badRequest("seriesId is required");
-    if (!VALID_STATUSES.includes(status)) return badRequest("Invalid status");
+    if (!isValidStatus(status)) return badRequest("Invalid status");
 
     const series = await prisma.series.findUnique({ where: { id: BigInt(seriesId) } });
     if (!series) return notFound("Series not found");

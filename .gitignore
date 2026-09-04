@@ -1,25 +1,13 @@
-# Java / Gradle
-.gradle/
-build/
-*.class
-*.jar
-*.war
-*.ear
-out/
-.idea/
-*.iml
-*.ipr
-*.iws
-.DS_Store
-
-# Node / Frontend
+# Node
 node_modules/
 dist/
 .vite/
 .next/
 *.local
+next-env.d.ts
+*.tsbuildinfo
 
-# Environment
+# Environment (.env.example files are intentionally tracked)
 .env
 *.env.local
 
@@ -27,7 +15,9 @@ dist/
 *.log
 logs/
 
-# OS
+# Editors / OS
+.idea/
+.vscode/
 .DS_Store
 Thumbs.db
 CLAUDE.md

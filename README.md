@@ -119,7 +119,7 @@ docker compose up postgres -d
 ```bash
 cd clover-api
 npm install
-npx prisma migrate dev --name init   # Creates all tables
+npm run db:migrate                    # Applies migrations, creates all tables
 npm run dev                           # Starts on http://localhost:8080
 ```
 

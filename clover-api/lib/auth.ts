@@ -13,7 +13,7 @@ export interface TokenPayload extends JWTPayload {
   email: string;
 }
 
-export async function signAccessToken(userId: bigint, email: string) {
+async function signAccessToken(userId: bigint, email: string) {
   return new SignJWT({ userId: userId.toString(), email })
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
@@ -21,7 +21,7 @@ export async function signAccessToken(userId: bigint, email: string) {
     .sign(secret);
 }
 
-export async function signRefreshToken(userId: bigint, email: string) {
+async function signRefreshToken(userId: bigint, email: string) {
   return new SignJWT({ userId: userId.toString(), email })
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()

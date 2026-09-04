@@ -2,8 +2,7 @@ import { NextRequest } from "next/server";
 import { prisma } from "@/lib/db";
 import { getAuthUser, requireAuth } from "@/lib/auth";
 import { badRequest, notFound, ok, serverError } from "@/lib/response";
-
-const VALID_STATUSES = ["READING", "COMPLETED", "DROPPED", "PLAN_TO_READ"];
+import { isValidStatus } from "@/lib/libraryStatus";
 
 export async function PUT(
   req: NextRequest,
@@ -17,7 +16,7 @@ export async function PUT(
     const body = await req.json();
     const updateData: Record<string, unknown> = {};
     if (body.status !== undefined) {
-      if (!VALID_STATUSES.includes(body.status)) return badRequest("Invalid status");
+      if (!isValidStatus(body.status)) return badRequest("Invalid status");
       updateData.status = body.status;
     }
     if (body.currentChapter !== undefined) {

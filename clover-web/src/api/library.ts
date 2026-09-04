@@ -1,6 +1,17 @@
 import { client } from "./client";
 
-export type LibraryStatus = "READING" | "COMPLETED" | "DROPPED" | "PLAN_TO_READ";
+/** Single source of truth for reading statuses. Order here is the order they
+ *  appear in the UI (status dropdown, dashboard tabs). */
+export const LIBRARY_STATUSES = ["READING", "PLAN_TO_READ", "COMPLETED", "DROPPED"] as const;
+
+export type LibraryStatus = (typeof LIBRARY_STATUSES)[number];
+
+export const STATUS_LABELS: Record<LibraryStatus, string> = {
+  READING: "Reading",
+  PLAN_TO_READ: "Plan to Read",
+  COMPLETED: "Completed",
+  DROPPED: "Dropped",
+};
 
 export interface LibraryEntryDto {
   id: string;

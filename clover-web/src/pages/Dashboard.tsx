@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Bell, BookOpen, Plus } from "lucide-react";
-import { libraryApi, type LibraryStatus } from "@/api/library";
+import { libraryApi, LIBRARY_STATUSES, STATUS_LABELS, type LibraryStatus } from "@/api/library";
 import { updatesApi } from "@/api/updates";
 import { useAuthStore } from "@/store/authStore";
 import { Topbar } from "@/components/layout/Topbar";
@@ -12,10 +12,7 @@ import { timeAgo } from "@/lib/utils";
 
 const STATUS_TABS: { label: string; value: LibraryStatus | "ALL" }[] = [
   { label: "All", value: "ALL" },
-  { label: "Reading", value: "READING" },
-  { label: "Plan to Read", value: "PLAN_TO_READ" },
-  { label: "Completed", value: "COMPLETED" },
-  { label: "Dropped", value: "DROPPED" },
+  ...LIBRARY_STATUSES.map((value) => ({ label: STATUS_LABELS[value], value })),
 ];
 
 export default function Dashboard() {

@@ -17,10 +17,6 @@ const registry: Record<string, MangaProvider> = {
   mangaplus: new MangaPlusProvider(),
 };
 
-export function getProviders(): MangaProvider[] {
-  return Object.values(registry);
-}
-
 export function getProviderNames(): string[] {
   return Object.keys(registry);
 }

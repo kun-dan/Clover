@@ -3,7 +3,7 @@ import { useParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Plus, Trash2, BookOpen, BookMarked, Radio, CheckCircle2, Star, ShieldAlert } from "lucide-react";
 import { seriesApi, type ReadingSourceDto } from "@/api/series";
-import { libraryApi, type LibraryStatus } from "@/api/library";
+import { libraryApi, LIBRARY_STATUSES, STATUS_LABELS, type LibraryStatus } from "@/api/library";
 import { Topbar } from "@/components/layout/Topbar";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -11,12 +11,7 @@ import { StatusBadge } from "@/components/ui/StatusBadge";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { timeAgo } from "@/lib/utils";
 
-const STATUS_OPTIONS: { value: LibraryStatus; label: string }[] = [
-  { value: "READING", label: "Reading" },
-  { value: "PLAN_TO_READ", label: "Plan to Read" },
-  { value: "COMPLETED", label: "Completed" },
-  { value: "DROPPED", label: "Dropped" },
-];
+const STATUS_OPTIONS = LIBRARY_STATUSES.map((value) => ({ value, label: STATUS_LABELS[value] }));
 
 // Best-effort: only providers with a predictable numeric chapter URL (AsuraScans)
 // support jumping straight to the next chapter; everything else just opens the

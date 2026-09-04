@@ -1,12 +1,5 @@
-import type { LibraryStatus } from "@/api/library";
+import { STATUS_LABELS, type LibraryStatus } from "@/api/library";
 import { cn } from "@/lib/utils";
-
-const STATUS_LABELS: Record<LibraryStatus, string> = {
-  READING: "Reading",
-  COMPLETED: "Completed",
-  DROPPED: "Dropped",
-  PLAN_TO_READ: "Plan to Read",
-};
 
 const STATUS_STYLES: Record<LibraryStatus, string> = {
   READING: "bg-clover-900 text-clover-300 border-clover-700",

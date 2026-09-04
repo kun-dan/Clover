@@ -3,7 +3,7 @@ import { type AniListMedia, mediaTitle } from "./anilist";
 import type { Series } from "@prisma/client";
 import { Decimal } from "@prisma/client/runtime/library";
 
-export function seriesFromAniList(media: AniListMedia): Omit<Series, "id" | "createdAt" | "updatedAt" | "latestChapter"> {
+function seriesFromAniList(media: AniListMedia): Omit<Series, "id" | "createdAt" | "updatedAt" | "latestChapter"> {
   return {
     anilistId: media.id,
     title: mediaTitle(media),

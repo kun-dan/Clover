@@ -20,23 +20,6 @@ const SEARCH_QUERY = `
   }
 `;
 
-const DETAIL_QUERY = `
-  query ($id: Int) {
-    Media(id: $id, type: MANGA) {
-      id
-      title { english romaji native }
-      description(asHtml: false)
-      coverImage { extraLarge large }
-      bannerImage
-      genres
-      status
-      chapters
-      isAdult
-      averageScore
-    }
-  }
-`;
-
 export interface AniListMedia {
   id: number;
   title: { english: string | null; romaji: string | null; native: string | null };
@@ -107,11 +90,6 @@ export async function searchAniList(
     }
   );
   return { media: data.Page.media, pageInfo: data.Page.pageInfo };
-}
-
-export async function fetchAniListById(id: number): Promise<AniListMedia> {
-  const data = await gql<{ Media: AniListMedia }>(DETAIL_QUERY, { id });
-  return data.Media;
 }
 
 export function mediaTitle(m: AniListMedia): string {

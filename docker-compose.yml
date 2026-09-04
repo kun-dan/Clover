@@ -22,20 +22,23 @@ services:
     ports:
       - "8080:8080"
     environment:
-      DATASOURCES_DEFAULT_URL: jdbc:postgresql://postgres:5432/clover
-      DATASOURCES_DEFAULT_USERNAME: clover
-      DATASOURCES_DEFAULT_PASSWORD: cloverpass
+      DATABASE_URL: postgresql://clover:cloverpass@postgres:5432/clover
       JWT_SECRET: ${JWT_SECRET:-insecure-dev-secret-32chars!!!}
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
       ASURASCANS_BASE_URL: ${ASURASCANS_BASE_URL:-https://asurascans.com}
       MANGAPLUS_API_URL: ${MANGAPLUS_API_URL:-https://jumpg-webapi.tokyo-cdn.com}
-      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:5173}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
+      # Passed through so the container can reach AniList / the providers on
+      # networks with no direct egress. Unset on a normal network = no proxy.
+      HTTP_PROXY: ${HTTP_PROXY:-}
+      HTTPS_PROXY: ${HTTPS_PROXY:-}
+      NO_PROXY: ${NO_PROXY:-localhost,127.0.0.1,::1,postgres}
     depends_on:
       postgres:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/health || exit 1"]
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8080/api/health || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 6
@@ -45,8 +48,6 @@ services:
     build:
       context: ./clover-web
       dockerfile: Dockerfile
-      args:
-        VITE_API_URL: ""
     ports:
       - "3000:80"
     depends_on:
